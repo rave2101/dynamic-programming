@@ -139,13 +139,63 @@ After solve(5): cache = [-1, -1,  1,  2,  3,  5]
 
 ---
 
+## Approach 3 — Tabulation (Bottom-Up)
+
+Instead of starting from `fib(n)` and recursing down, tabulation flips the direction — start from the base cases and **build up** to `fib(n)` iteratively.
+
+```cpp
+class Solution {
+public:
+    int fib(int n) {
+        if (n <= 1) return n;
+        vector<int> dp(n + 1);
+        dp[0] = 0;
+        dp[1] = 1;
+        for (int i = 2; i <= n; i++)
+            dp[i] = dp[i - 1] + dp[i - 2];
+        return dp[n];
+    }
+};
+```
+
+### How the table fills up for `fib(5)`
+
+No recursion, no stack — just a simple loop filling the table left to right:
+
+```
+i = 0: dp[0] = 0
+i = 1: dp[1] = 1
+i = 2: dp[2] = dp[1] + dp[0] = 1 + 0 = 1
+i = 3: dp[3] = dp[2] + dp[1] = 1 + 1 = 2
+i = 4: dp[4] = dp[3] + dp[2] = 2 + 1 = 3
+i = 5: dp[5] = dp[4] + dp[3] = 3 + 2 = 5
+
+dp = [0, 1, 1, 2, 3, 5]
+      ↑  ↑  ↑  ↑  ↑  ↑
+      0  1  2  3  4  5   ← index = fib number
+```
+
+### Memoization vs Tabulation
+
+| | Memoization (Top-Down) | Tabulation (Bottom-Up) |
+|---|---|---|
+| Direction | `fib(n)` → down to base cases | base cases → up to `fib(n)` |
+| Mechanism | Recursion + cache | Iterative loop + dp array |
+| Call stack | O(n) stack frames | No stack overhead |
+| Computes all subproblems? | Only the ones needed | Yes, all from 0 to n |
+
+Both are O(n) time and O(n) space, but tabulation is generally preferred in practice — no risk of stack overflow for large `n`.
+
+---
+
 ## Complexity Comparison
 
-|                | Pure Recursion | Memoization  |
-|----------------|----------------|--------------|
-| Time           | O(2ⁿ)          | O(n)         |
-| Space          | O(n) callstack | O(n) cache + O(n) callstack |
-| Repeated work  | Yes            | No           |
+|                | Pure Recursion | Memoization                 | Tabulation  |
+|----------------|----------------|-----------------------------|-------------|
+| Time           | O(2ⁿ)          | O(n)                        | O(n)        |
+| Space          | O(n) callstack | O(n) cache + O(n) callstack | O(n) dp array |
+| Repeated work  | Yes            | No                          | No          |
+| Stack overflow risk | Yes       | Yes (large n)               | No          |
 
 ---
 
