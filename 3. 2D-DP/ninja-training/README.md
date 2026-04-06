@@ -113,6 +113,117 @@ int ninjaTraining(vector<vector<int>>& matrix) {
 
 ---
 
+## Recursion Stack Walkthrough
+
+Using the same example:
+
+```
+Day:        0    1    2
+Activity 0: 10   40   70
+Activity 1: 20   50   80
+Activity 2: 30   60   90
+```
+
+Entry call: `util(day=2, last=3)`
+
+```
+util(2, 3)                            dp[2][3] = -1, not cached
+├── try i=0: 70 + util(1, 0)
+│   │                                 dp[1][0] = -1, not cached
+│   ├── try i=1: 50 + util(0, 1)
+│   │   │                             day==0 → pick all i != 1
+│   │   │                             i=0: maxi = max(0, 10) = 10
+│   │   │                             i=2: maxi = max(10, 30) = 30
+│   │   └── return dp[0][1] = 30
+│   │   activity = 50 + 30 = 80,  maxi = 80
+│   │
+│   ├── try i=2: 60 + util(0, 2)
+│   │   │                             day==0 → pick all i != 2
+│   │   │                             i=0: maxi = max(0, 10) = 10
+│   │   │                             i=1: maxi = max(10, 20) = 20
+│   │   └── return dp[0][2] = 20
+│   │   activity = 60 + 20 = 80,  maxi = max(80, 80) = 80
+│   │
+│   └── return dp[1][0] = 80
+│   activity = 70 + 80 = 150,  maxi = 150
+│
+├── try i=1: 80 + util(1, 1)
+│   │                                 dp[1][1] = -1, not cached
+│   ├── try i=0: 40 + util(0, 0)
+│   │   │                             day==0 → pick all i != 0
+│   │   │                             i=1: maxi = max(0, 20) = 20
+│   │   │                             i=2: maxi = max(20, 30) = 30
+│   │   └── return dp[0][0] = 30
+│   │   activity = 40 + 30 = 70,  maxi = 70
+│   │
+│   ├── try i=2: 60 + util(0, 2)
+│   │   │                             day==0 → base case hit again (recomputed, see bug below)
+│   │   │                             i=0: maxi = 10, i=1: maxi = 20
+│   │   └── return 20
+│   │   activity = 60 + 20 = 80,  maxi = max(70, 80) = 80
+│   │
+│   └── return dp[1][1] = 80
+│   activity = 80 + 80 = 160,  maxi = max(150, 160) = 160
+│
+├── try i=2: 90 + util(1, 2)
+│   │                                 dp[1][2] = -1, not cached
+│   ├── try i=0: 40 + util(0, 0)
+│   │   │                             day==0 → base case hit again (recomputed)
+│   │   │                             i=1: maxi = 20, i=2: maxi = 30
+│   │   └── return 30
+│   │   activity = 40 + 30 = 70,  maxi = 70
+│   │
+│   ├── try i=1: 50 + util(0, 1)
+│   │   │                             day==0 → base case hit again (recomputed)
+│   │   │                             i=0: maxi = 10, i=2: maxi = 30
+│   │   └── return 30
+│   │   activity = 50 + 30 = 80,  maxi = max(70, 80) = 80
+│   │
+│   └── return dp[1][2] = 80
+│   activity = 90 + 80 = 170,  maxi = max(160, 170) = 170
+│
+└── return dp[2][3] = 170
+```
+
+### dp table after all calls complete
+
+```
+         last=0  last=1  last=2  last=3
+day=0:     30      30      20      -1    ← set but never read back (see bug below)
+day=1:     80      80      80      -1
+day=2:     -1      -1      -1     170    ← answer
+```
+
+### What got cached vs recomputed
+
+| Call | First time | Second time |
+|------|-----------|-------------|
+| util(1, 0) | computed → dp[1][0]=80 | never called again |
+| util(1, 1) | computed → dp[1][1]=80 | never called again |
+| util(1, 2) | computed → dp[1][2]=80 | never called again |
+| util(0, 0) | computed → dp[0][0]=30 | **recomputed** (cache not used) |
+| util(0, 1) | computed → dp[0][1]=30 | **recomputed** (cache not used) |
+| util(0, 2) | computed → dp[0][2]=20 | **recomputed** (cache not used) |
+
+Day 1 calls are cached correctly. Day 0 calls are always recomputed — because the base case check comes **before** the cache check in the code, so `dp[day][last] != -1` is never reached when `day == 0`.
+
+**Fix — move the cache check to the top:**
+
+```cpp
+int util(...) {
+    if (dp[day][last] != -1) return dp[day][last];  // ← move this up
+    if (day == 0) {
+        ...
+        return dp[0][last] = maxi;
+    }
+    ...
+}
+```
+
+Now `util(0, last)` is computed once, stored, and returned from cache on every subsequent call.
+
+---
+
 ## Common Bugs
 
 ### 1. dp sized `day` instead of `day+1`
