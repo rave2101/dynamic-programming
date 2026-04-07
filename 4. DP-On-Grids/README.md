@@ -9,6 +9,7 @@ Problems that involve traversing a 2D grid to count paths, find minimum costs, o
 | # | Problem | Difficulty | Video | Article | Solution |
 |---|---------|------------|-------|---------|----------|
 | DP 8 | [Unique Paths](https://leetcode.com/problems/unique-paths/) | Medium | [YouTube](https://www.youtube.com/watch?v=sdE0A2Oxofw) | [TUF](https://takeuforward.org/data-structure/grid-unique-paths-dp-on-grids-dp8/) | [solution.cpp](unique-paths/solution.cpp) |
+| DP 9 | [Unique Paths II](https://leetcode.com/problems/unique-paths-ii/) | Medium | [YouTube](https://www.youtube.com/watch?v=TmhpgXScLyY) | [TUF](https://takeuforward.org/data-structure/grid-unique-paths-2-dp-9/) | [solution.cpp](unique-paths-ii/solution.cpp) |
 
 ---
 
