@@ -6,20 +6,20 @@ using namespace std;
 class Solution {
 public:
     int util(vector<int>& wt, vector<int>& val, vector<vector<int>>& dp, int idx, int W) {
-        if (idx == 0) return (W >= wt[0]) ? val[0] : 0;
+        if (idx == 0) return 0;  // no items left → max value is 0
         if (dp[idx][W] != -1) return dp[idx][W];
 
         int not_pick = util(wt, val, dp, idx - 1, W);
         int pick = INT_MIN;
-        if (W >= wt[idx])
-            pick = val[idx] + util(wt, val, dp, idx - 1, W - wt[idx]);
+        if (W >= wt[idx - 1])
+            pick = val[idx - 1] + util(wt, val, dp, idx - 1, W - wt[idx - 1]);
 
         return dp[idx][W] = max(pick, not_pick);
     }
 
     int knapsack01(vector<int>& wt, vector<int>& val, int n, int W) {
-        vector<vector<int>> dp(n, vector<int>(W + 1, -1));
-        return util(wt, val, dp, n - 1, W);
+        vector<vector<int>> dp(n + 1, vector<int>(W + 1, -1));
+        return util(wt, val, dp, n, W);
     }
 };
 */

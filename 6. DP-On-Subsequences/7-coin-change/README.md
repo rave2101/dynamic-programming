@@ -85,27 +85,26 @@ The only structural difference is `i-1` vs `i` in the pick branch.
 
 ```cpp
 int util(vector<int>& coins, vector<vector<int>>& dp, int idx, int amount) {
-    if (amount == 0) return 0;
-    if (idx == 0)    return (amount % coins[0] == 0) ? amount / coins[0] : 1e9;
+    if (idx == 0) return amount == 0 ? 0 : (int)1e9;  // no coins left
     if (dp[idx][amount] != -1) return dp[idx][amount];
 
     int not_pick = util(coins, dp, idx - 1, amount);
-    int pick = 1e9;
-    if (amount >= coins[idx])
-        pick = 1 + util(coins, dp, idx, amount - coins[idx]);
+    int pick = (int)1e9;
+    if (amount >= coins[idx - 1])
+        pick = 1 + util(coins, dp, idx, amount - coins[idx - 1]);
 
     return dp[idx][amount] = min(pick, not_pick);
 }
 
 int MinimumCoins(vector<int>& coins, int amount) {
     int SIZE = coins.size();
-    vector<vector<int>> dp(SIZE, vector<int>(amount + 1, -1));
-    int ans = util(coins, dp, SIZE - 1, amount);
-    return ans >= 1e9 ? -1 : ans;
+    vector<vector<int>> dp(SIZE + 1, vector<int>(amount + 1, -1));
+    int ans = util(coins, dp, SIZE, amount);
+    return ans >= (int)1e9 ? -1 : ans;
 }
 ```
 
-**Base case at `idx == 0`:** only coin `coins[0]` is available. The amount is reachable only if it's perfectly divisible by `coins[0]`, in which case the answer is `amount / coins[0]`. Otherwise return `1e9` (impossible).
+**Base case at `idx == 0`:** no coin denominations left. If `amount == 0`, we're done — return `0`. Otherwise it's unreachable — return `1e9`.
 
 **Time: O(n × amount) | Space: O(n × amount) + O(amount) call stack**
 
