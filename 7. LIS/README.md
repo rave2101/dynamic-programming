@@ -46,20 +46,47 @@ result[2] = 5  →  result = [2, 3, 5, 101]
 
 Replacing keeps tails **as small as possible**, which gives future elements the best chance of extending the subsequence.
 
+---
+
+## `lower_bound` vs `upper_bound` — Why not `upper_bound`?
+
+LIS requires **strictly increasing** elements (each element must be greater than the previous, equal is not allowed).
+
 ```
-nums = [3, 5, 6, 2, 5, 4, 19, 5, 6, 7, 12]
-
-After processing 3,5,6  → result = [3, 5, 6]        length = 3
-num = 2 → replace 3    → result = [2, 5, 6]        length = 3 (unchanged)
-num = 5 → replace 6    → result = [2, 5, 5] ← wait, lower_bound(5) points to first 5
-                                                     replace → [2, 5, 5]?
+nums = [1, 3, 3, 5]
 ```
 
-Actually since this is strictly increasing LIS, `lower_bound` finds the first element **≥ val**, so equal elements get replaced too (preventing duplicates from extending the LIS). For non-strictly increasing, use `upper_bound` instead.
+**Using `lower_bound` (correct):**
+```
+result = [1, 3]          after processing 1, 3
 
-### `lower_bound` vs `upper_bound`
+num = 3 → lower_bound finds first element >= 3 → points to index 1 (the existing 3)
+          replace → result = [1, 3]             length stays 2  ✓
 
-| | Returns first element | Use for |
+num = 5 → append → result = [1, 3, 5]          length = 3  ✓
+
+Answer: 3  →  LIS is [1, 3, 5]  ✓
+```
+
+**Using `upper_bound` (wrong):**
+```
+result = [1, 3]          after processing 1, 3
+
+num = 3 → upper_bound finds first element > 3 → points past the 3, to index 2 (end)
+          append → result = [1, 3, 3]          length becomes 3  ✗
+
+num = 5 → append → result = [1, 3, 3, 5]      length = 4  ✗
+
+Answer: 4  →  counts [1, 3, 3, 5] as valid LIS, but 3 == 3 is not strictly increasing  ✗
+```
+
+**The key difference when the value already exists in `result`:**
+
+| | `lower_bound` (≥ val) | `upper_bound` (> val) |
 |---|---|---|
-| `lower_bound` | **≥ val** | Strictly increasing LIS |
-| `upper_bound` | **> val** | Non-decreasing LIS |
+| val exists in result | lands **on** it → replaces it → length unchanged | lands **past** it → appends/replaces next → length grows wrongly |
+| val doesn't exist | both behave the same | both behave the same |
+
+**Rule:**
+- Strictly increasing LIS → use `lower_bound`
+- Non-decreasing LIS (duplicates allowed) → use `upper_bound`
