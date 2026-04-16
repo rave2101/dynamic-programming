@@ -14,6 +14,57 @@ Problems based on finding the longest increasing subsequence pattern, including 
 
 ---
 
+## Tabulation — How It Works
+
+`dp[i]` = length of LIS **ending at index i**. For every `i`, look back at all `j < i`:
+
+```
+if nums[j] < nums[i] && dp[j]+1 > dp[i]:
+    dp[i]     = dp[j] + 1
+    parent[i] = j
+```
+
+Every element starts as its own LIS of length 1 (`dp[i] = 1`, `parent[i] = i`).
+
+---
+
+## Reconstructing the Actual LIS (Backtracking)
+
+After filling `dp[]`, track `maxIdx` — the index where the longest LIS **ends**.
+Then follow `parent[]` backwards until you reach an element that is its own parent.
+
+```
+nums   = [2, 5, 3, 7]
+dp     = [1, 2, 2, 3]
+parent = [0, 0, 0, 1]    ← parent[3]=1 means 7 came after 5
+
+Backtrack from maxIdx=3:
+  i=3 → push 7, move to parent[3]=1
+  i=1 → push 5, move to parent[1]=0
+  i=0 → push 2, parent[0]==0 → stop
+
+Collected: [7, 5, 2]  →  reverse  →  [2, 5, 7]  ✓
+```
+
+---
+
+## Bug: `maxLen=0` vs `maxLen=1`
+
+The DP loop starts at `i=1`, so **index 0 is never compared against `maxLen`**.
+
+If `maxLen=0`, the first update fires at `i=1`, making index 0 permanently unreachable as `maxIdx`. For a fully decreasing input like `[10,8,6,3]`, every `dp[i]=1` and `maxIdx` wrongly settles at index 1 instead of 0.
+
+```
+Input: [10, 8, 6, 3]
+
+maxLen=0 → maxIdx=1 → returns [8]   ✗
+maxLen=1 → maxIdx=0 → returns [10]  ✓
+```
+
+**Fix:** initialize `maxLen = 1, maxIdx = 0` — treat index 0 as the default answer.
+
+---
+
 ## O(n log n) — How It Works
 
 Maintain a `result` array where `result[i]` holds the **smallest possible tail** of any increasing subsequence of length `i+1`.

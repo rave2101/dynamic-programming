@@ -1,36 +1,45 @@
 /*
- * Longest Increasing Subsequence — Tabulation (Bottom-Up DP)
+ * Longest Increasing Subsequence — Tabulation (Bottom-Up DP) + Reconstruction
  *
  * Approach:
- *   dp[i] = length of LIS ending at index i
+ *   dp[i]     = length of LIS ending at index i
+ *   parent[i] = index of the previous element in the LIS ending at i
+ *               (initialized to i itself → means "no predecessor")
  *
  *   For every i, look back at all j < i:
- *     if nums[j] < nums[i] → nums[i] can extend the subsequence ending at j
- *     dp[i] = max(dp[i], dp[j] + 1)
+ *     if nums[j] < nums[i] && dp[j]+1 > dp[i]:
+ *       dp[i]     = dp[j] + 1   (extend the LIS ending at j)
+ *       parent[i] = j            (remember where we came from)
  *
- *   Base case: dp[i] = 1 for all i (every element is an LIS of length 1 by itself)
- *   Answer: max element in dp[]
+ *   Base case: dp[i] = 1, parent[i] = i  (every element is its own LIS)
  *
- * Example: nums = [10, 9, 2, 5, 3, 7, 101, 18]
- *   i=0 → dp=[1, 1, 1, 1, 1, 1, 1, 1]
- *   i=1 → no j where nums[j]<9 with j<1      → dp[1]=1
- *   i=2 → no j where nums[j]<2 with j<2      → dp[2]=1
- *   i=3 → nums[2]=2 < 5 → dp[3]=dp[2]+1=2   → dp[3]=2
- *   i=4 → nums[2]=2 < 3 → dp[4]=dp[2]+1=2   → dp[4]=2
- *   i=5 → nums[2]=2,nums[3]=5,nums[4]=3 < 7  → dp[5]=dp[3]+1=3
- *   i=6 → all previous < 101                  → dp[6]=dp[5]+1=4
- *   i=7 → nums[2..5] < 18                     → dp[7]=dp[5]+1=4
- *   Answer: max(dp) = 4  ✓  (LIS: 2, 3, 7, 101 or 2, 3, 7, 18)
+ *   Track maxIdx = index where the overall LIS ends (needed to backtrack).
+ *
+ * Reconstruction (backtracking):
+ *   Start at maxIdx, follow parent[] until parent[i] == i (the start).
+ *   Collect elements in reverse, then reverse the result.
+ *
+ * Example: nums = [2, 5, 3, 7]
+ *   After DP:
+ *     dp     = [1, 2, 2, 3]
+ *     parent = [0, 0, 0, 1]   ← parent[3]=1 means 7 came after 5
+ *
+ *   Backtrack from maxIdx=3:
+ *     i=3 → push 7, move to parent[3]=1
+ *     i=1 → push 5, move to parent[1]=0
+ *     i=0 → push 2, parent[0]==0 → stop
+ *   Collected: [7, 5, 2] → reverse → [2, 5, 7]  ✓
+ *
+ * ⚠️  BUG to avoid — initialize maxLen=1, maxIdx=0 (NOT maxLen=0):
+ *   The loop starts at i=1, so index 0 is never compared against maxLen.
+ *   If maxLen=0, the first update happens at i=1, making index 0 unreachable
+ *   as maxIdx. For a fully decreasing input like [10,8,6,3], every dp[i]=1
+ *   and maxIdx would wrongly settle at index 1 instead of 0.
+ *   Fix: treat index 0 as the default answer (maxLen=1, maxIdx=0).
  *
  * Complexity:
  *   Time  : O(n²) — two nested loops
- *   Space : O(n)  — dp array of size n
- *
- * Comparison with memoization.cpp:
- *   Same O(n²) time but O(n) space instead of O(n²),
- *   because tabulation only needs dp[i] (not a 2D table).
- *   The 2D table in memoization comes from tracking both idx and prev;
- *   tabulation reframes the state as "LIS ending at i", needing only 1D.
+ *   Space : O(n)  — dp and parent arrays of size n
  */
 
 #include <bits/stdc++.h>
@@ -38,18 +47,36 @@ using namespace std;
 
 class Solution {
 public:
-    int LIS(vector<int>& nums) {
-        int SIZE = nums.size();
+    vector<int> longestIncreasingSubsequence(vector<int>& nums) {
+        int SIZE = nums.size(), maxLen = 1, maxIdx = 0;
         vector<int> dp(SIZE, 1);
+        vector<int> parent(SIZE);
+        vector<int> result;
+
+        for (int i = 0; i < SIZE; i++) parent[i] = i;
 
         for (int i = 1; i < SIZE; i++) {
             for (int j = 0; j < i; j++) {
-                if (nums[j] < nums[i]) {
-                    dp[i] = max(dp[i], dp[j] + 1);
+                if (nums[i] > nums[j] && dp[j] + 1 > dp[i]) {
+                    dp[i] = dp[j] + 1;
+                    parent[i] = j;
                 }
+            }
+            if (dp[i] > maxLen) {
+                maxLen = dp[i];
+                maxIdx = i;
             }
         }
 
-        return *max_element(dp.begin(), dp.end());
+        // Backtrack from maxIdx to reconstruct the LIS
+        int i = maxIdx;
+        while (parent[i] != i) {
+            result.push_back(nums[i]);
+            i = parent[i];
+        }
+        result.push_back(nums[i]);
+
+        reverse(result.begin(), result.end());
+        return result;
     }
 };
