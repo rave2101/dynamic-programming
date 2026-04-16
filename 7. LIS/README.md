@@ -12,6 +12,7 @@ Problems based on finding the longest increasing subsequence pattern, including 
 | `tabulation.cpp` | Bottom-Up DP | O(n²) | O(n) |
 | `nlogn.cpp` | Binary Search (Patience Sorting) | O(n log n) | O(n) |
 | `largest_divisible_subset.cpp` | LIS variant — divisibility condition | O(n²) | O(n) |
+| `longest_string_chain.cpp` | LIS variant — predecessor check | O(n²·L) | O(n) |
 
 ---
 
@@ -55,6 +56,63 @@ maxIdx = 3
 Backtrack: 3 → 2 → 1, parent[1]==1 stop
 Collected: [20, 10, 5] → reverse → [5, 10, 20]  ✓
 ```
+
+---
+
+## Longest String Chain — Problem
+
+**Difficulty:** Medium
+
+Given an array of words, return the length of the longest chain where each word is a **predecessor** of the next. `wordA` is a predecessor of `wordB` if you can insert exactly one letter anywhere in `wordA` to get `wordB`.
+
+```
+Input:  words = ["a", "b", "ba", "bca", "bda", "bdca"]
+Output: 4
+Chain:  "a" → "ba" → "bda" → "bdca"
+```
+
+### Why This Is an LIS Variant
+
+`dp[i]` = length of longest chain ending at `words[i]`. For each `i`, look back at all `j < i` and check if `words[j]` is a predecessor of `words[i]` — identical structure to LIS tabulation with a custom condition instead of `nums[j] < nums[i]`.
+
+### Why Sort by Length (Not Lexicographically)
+
+A predecessor is always **1 character shorter** than its successor. The DP requires all valid predecessors to appear at a lower index. Lexicographic sort breaks this:
+
+```
+"ab" < "b"  lexicographically  →  "ab" gets index 0, "b" gets index 1
+
+When processing "b" (i=1): compare("ab", "b") → SIZE2-SIZE1 = -1 ≠ 1 → false
+The chain "b" → "ab" is never found  ✗
+```
+
+Sorting by length guarantees shorter words always come before longer ones.
+
+### compare(a, b) — Is `a` a predecessor of `b`?
+
+Two-pointer: try to match all characters of `a` inside `b`. On a match, advance both. On a mismatch, **advance only `j`** (skip the inserted character in `b`, keep `a`'s pointer in place).
+
+```
+a="ab", b="acb"   (insert 'c' in the middle)
+
+i=0,j=0: 'a'=='a' → i=1, j=1
+i=1,j=1: 'b'!='c' → j=2      ← skip 'c' in b only
+i=1,j=2: 'b'=='b' → i=2, j=3
+i==SIZE1 → true  ✓
+```
+
+### Bugs Encountered
+
+**Bug 1 — Advancing both `i` and `j` on mismatch:**
+```cpp
+if(a[i]!=b[j]) mismatch++;
+i++; j++;   // ← wrong: skips one char from a too
+```
+Only works when the inserted character is at the very end. Fails for mid-string insertions — counts 2 mismatches instead of 1.
+
+**Bug 2 — Using `SIZE2-SIZE1 >= 2` instead of `SIZE2-SIZE1 != 1`:**
+
+`>= 2` fails to reject equal-length words (`diff=0`) and cases where `a` is longer than `b` (negative diff). Use `!= 1` to handle all invalid cases in one check.
 
 ---
 
