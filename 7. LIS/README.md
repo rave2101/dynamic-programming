@@ -14,6 +14,50 @@ Problems based on finding the longest increasing subsequence pattern, including 
 | `largest_divisible_subset.cpp` | LIS variant — divisibility condition | O(n²) | O(n) |
 | `longest_string_chain.cpp` | LIS variant — predecessor check | O(n²·L) | O(n) |
 | `longest_bitonic_sequence.cpp` | Two LIS passes (forward + backward) | O(n²) | O(n) |
+| `number_of_lis.cpp` | LIS + count[] to track distinct ways | O(n²) | O(n) |
+
+---
+
+## Number of Longest Increasing Subsequences — Problem
+
+**Difficulty:** Medium
+
+Given an array, return the **count** of distinct longest increasing subsequences.
+
+```
+Input:  nums = [1, 3, 5, 4, 7]
+Output: 2
+LIS:    [1, 3, 5, 7]  and  [1, 3, 4, 7]
+```
+
+### Why `dp[]` Alone Is Not Enough
+
+`dp[i]` tells you the **length** of the LIS ending at `i`, but not **how many** distinct LIS of that length exist. Multiple paths through different indices can produce the same length.
+
+### The `count[]` Array
+
+`count[i]` = number of distinct LIS of length `dp[i]` ending at index `i`.
+
+When `nums[j] < nums[i]`, two cases:
+
+| Condition | Action | Meaning |
+|---|---|---|
+| `dp[j]+1 > dp[i]` | `dp[i]=dp[j]+1`, `count[i]=count[j]` | New longer length — inherit all ways from j |
+| `dp[j]+1 == dp[i]` | `count[i]+=count[j]` | Another path to same length — accumulate ways |
+
+Final answer: sum `count[i]` for all `i` where `dp[i] == maxLen`.
+
+### Walkthrough: `[1, 3, 5, 4, 7]`
+
+```
+i=4 (7): j=2(5): dp[2]+1=4 > dp[4]=1 → dp[4]=4, count[4]=count[2]=1
+         j=3(4): dp[3]+1=4 == dp[4]=4 → count[4]+=count[3] → count[4]=2
+
+dp    = [1, 2, 3, 3, 4]
+count = [1, 1, 1, 1, 2]
+
+maxLen=4, dp[4]==4 → result = count[4] = 2  ✓
+```
 
 ---
 
